@@ -418,6 +418,35 @@ uv run python -c "import tomllib; print(tomllib.load(open('agents/duty_manager.t
 
 ---
 
+## Chapter 9: Loading and checking agents
+
+### One function reads them all
+
+**The idea.** [load_agents](../acme/agents.py:14) reads every `.toml` file in `agents/` and returns a dictionary keyed by agent name. It refuses a file that lacks any of the six fields listed in [REQUIRED_KEYS](../acme/agents.py:11), or whose `name` differs from its file name (so `fares.toml` must say `name = "fares"`). The error message names the file, so a typo is easy to find.
+
+**Why it matters.** A config file that is silently wrong is worse than one that fails loudly. Checking the shape at load time means every later step can trust what it reads.
+
+### Tests that connect the files to everything else
+
+**The idea.** [test_agents.py](../tests/test_agents.py) compares the agent files with the real servers and the routing table. It asks each server which tools it offers and checks that every `server/tool` entry exists ([test_agents.py:58](../tests/test_agents.py:58) checks that all 8 tools have exactly one owner). It checks that every delegate is a real agent, that each skill folder exists, and that each desk's description contains keywords from the escalation table.
+
+**Why it matters.** An agent that names a tool which does not exist fails only when a passenger asks the question. These tests catch it in under a second, with no model involved. They also catch drift: add a ninth tool to a server and the ownership test fails until some agent claims it.
+
+### A test that guards the flaw
+
+**The idea.** [the planted-flaw test](../tests/test_agents.py:98) checks that the duty manager's self-answer sentence is still present. It looks odd to test for a mistake, but the flaw is a deliberate part of the lab and must not be fixed by accident.
+
+**Why it matters.** When participants remove the sentence in Part 1, this test will fail. That is intended: it is the signal that the before-and-after measurement has begun. The test's docstring says so, to stop a well-meaning tidy-up.
+
+**Try it.**
+
+```bash
+uv run pytest tests/test_agents.py -q
+uv run python -c "from acme.agents import load_agents; print(sorted(load_agents()))"
+```
+
+---
+
 ## Troubleshooting
 
 ### `ModuleNotFoundError: No module named 'acme'` outside pytest
