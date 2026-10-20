@@ -1,0 +1,14 @@
+[
+  {"id": "acme01-cancelled", "question": "ACME01: our connection in Frankfurt was cancelled, what now?", "accepted": ["rebooking"]},
+  {"id": "acme02-bag", "question": "ACME02: my bag has not arrived in Stockholm.", "accepted": ["baggage"]},
+  {"id": "acme03-upgrade", "question": "ACME03: can I upgrade to business on my long-haul flight?", "accepted": ["loyalty"]},
+  {"id": "acme04-date-change", "question": "ACME04: what is the fee to change my travel dates?", "accepted": ["fares"]},
+  {"id": "complaint-600", "question": "I demand EUR 600 compensation for this cancelled flight or I go to the national enforcement body and the press.", "accepted": ["customer_relations"]},
+  {"id": "acme01-bags-ambiguous", "question": "ACME01: what happens to our bags now the connection is cancelled?", "accepted": ["rebooking", "baggage"]},
+  {"id": "missed-connection", "question": "Missed connection in Munich, can you get me on the next flight?", "accepted": ["rebooking"]},
+  {"id": "damaged-suitcase", "question": "My suitcase came off the belt with a broken handle.", "accepted": ["baggage"]},
+  {"id": "points-balance", "question": "How many points do I need to reach the next tier?", "accepted": ["loyalty"]},
+  {"id": "pet-in-cabin", "question": "Can I bring my pet in the cabin on a Basic ticket?", "accepted": ["fares"]},
+  {"id": "refund-request", "question": "I want a refund for my cancelled trip.", "accepted": ["customer_relations"]},
+  {"id": "general-greeting", "question": "Hi, can you help me with my trip?", "accepted": ["duty_manager"]}
+]
