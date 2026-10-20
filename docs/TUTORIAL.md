@@ -281,3 +281,27 @@ uv run mcp dev servers/fares_server.py
 ```
 
 In the Inspector, connect, open Tools, call `check_fare_rule` with `B`, then with `Z`, and compare the two results.
+
+---
+
+## Troubleshooting
+
+### `ModuleNotFoundError: No module named 'acme'` outside pytest
+
+**What is happening.** uv installs this project by writing a small pointer file, `.venv/lib/python3.12/site-packages/_editable_impl_acme_lab.pth`, which tells Python where the `acme` code lives. On macOS that file can end up with the system's *hidden* flag set, and recent Python versions skip hidden `.pth` files as a safety measure. Python then never reads the pointer.
+
+The tests still pass because pytest adds the repo folder to Python's search path itself (`pythonpath = ["."]` in `pyproject.toml`). Commands like `mcp dev` don't, so they fail.
+
+**Fix.** Clear the hidden flag:
+
+```bash
+chflags nohidden .venv/lib/python3.12/site-packages/*.pth
+```
+
+Or, for a single run, tell Python where to look:
+
+```bash
+PYTHONPATH=. uv run mcp dev servers/fares_server.py
+```
+
+The flag can come back whenever uv rebuilds the environment, so reach for this fix first if the error reappears after `uv sync`.
