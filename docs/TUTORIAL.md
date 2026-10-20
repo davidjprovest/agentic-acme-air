@@ -284,6 +284,65 @@ In the Inspector, connect, open Tools, call `check_fare_rule` with `B`, then wit
 
 ---
 
+## Chapter 6: An AI router, measured
+
+### Same question, two routers
+
+**The idea.** [acme/llm_router.py](../acme/llm_router.py) asks the local model (qwen3.5:9b through Ollama) to name the desk for a question. It is measured against Chapter 4's keyword router on exactly the same cases, so the comparison is fair.
+
+**Why it matters.** "The AI is better" is a claim, and a claim needs evidence. A simple baseline tells you whether the expensive, slower, less predictable option actually earns its place. If the keyword list scored the same, you'd keep the keyword list.
+
+### The model names a desk, nothing else
+
+**The idea.** The system prompt describes each desk as a routing trigger ("baggage: delayed, damaged or lost bags") with its keywords, then says "Do not answer the question" and asks for JSON only: `{"desk": "..."}`. The parser accepts only the six known desk names. Anything else, including a made-up desk like `lost_property`, comes back as `"invalid"`.
+
+**Why it matters.** This is the "never guess" rule from Chapter 2 again. A model can hallucinate a desk that doesn't exist. Reporting `"invalid"` makes that visible in the score, instead of quietly sending the passenger somewhere random.
+
+### Robust parsing
+
+**The idea.** Ollama 0.40 can't force JSON output for qwen3.5. It replied `"structured output is unavailable"`, which showed up as an HTTP 501 error. So the router asks for JSON in the prompt, and the parser picks the first `{...}` object out of whatever comes back, even if the model wraps it in a code fence or adds chatter.
+
+**Why it matters.** Small models are inconsistent about output format. Parsing tolerantly while *validating* strictly gets the best of both. [test_llm_router.py:34](../tests/test_llm_router.py:34) tests the fenced case.
+
+### Offline tests and live tests
+
+**The idea.** Most tests in [test_llm_router.py](../tests/test_llm_router.py) never call the model. They check prompt building and parsing, so they run in milliseconds every time. The one live test is marked `llm` and only runs when you set `ACME_LLM=1`.
+
+**Why it matters.** A test suite that needs a running model is slow, noisy (your fans) and fails whenever Ollama is off. Splitting them keeps the everyday suite fast and reliable, and the expensive measurement stays opt-in.
+
+### The result
+
+| Case set | qwen3.5:9b | Keywords |
+|---|---|---|
+| Keyword-friendly (n=12) | 12/12 | 12/12 |
+| Paraphrases (n=8) | 8/8 | 0/8 |
+
+**What it shows.** On questions that happen to use the keywords, both routers are perfect. That tie was partly because the cases were written with the keyword list in mind. On natural phrasing ("miles" not "points", "dog" not "pet", "scrapped" not "cancelled"), the keyword router sends everything to the duty manager, while qwen gets all eight.
+
+**Read it carefully.** These are small samples (n=12 and n=8), with one model at temperature 0. The spec's Part 3 rule applies: always show the sample size beside a score. This is a strong signal, not a proven rate.
+
+### The test set can flatter you
+
+**The idea.** The first comparison was a 12/12 tie, which looked like "keywords are as good as AI". The cause was the test set: the cases were written by someone who knew the keywords, and one question was even reworded to match them.
+
+**Why it matters.** This is a quiet trap in evaluation. If the people writing the test know how the system works, they tend to write cases it passes. The fix is a second set written to avoid the system's vocabulary, which is what [routing_paraphrase_cases.json](../tests/fixtures/routing_paraphrase_cases.json) is. [test_llm_router.py:51](../tests/test_llm_router.py:51) records the keyword router's 0/8 as a known limitation, so it can't be forgotten.
+
+**Try it.** With Ollama running:
+
+```bash
+ACME_LLM=1 uv run pytest -m llm -s -q
+```
+
+Then try your own phrasing:
+
+```bash
+uv run python -c "
+from acme.llm_router import route_with_llm
+print(route_with_llm('My suitcase smells of fish and the handle is gone'))"
+```
+
+---
+
 ## Troubleshooting
 
 ### `ModuleNotFoundError: No module named 'acme'` outside pytest

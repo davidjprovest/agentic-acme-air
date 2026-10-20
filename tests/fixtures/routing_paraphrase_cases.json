@@ -1,0 +1,10 @@
+[
+  {"id": "para-missed-my-connection", "question": "I missed my connection in Munich", "accepted": ["rebooking"]},
+  {"id": "para-lost-stuff", "question": "The airline has lost my stuff", "accepted": ["baggage"]},
+  {"id": "para-dog-on-board", "question": "Can I take my dog on board?", "accepted": ["fares"]},
+  {"id": "para-miles", "question": "How many miles do I have?", "accepted": ["loyalty"]},
+  {"id": "para-money-back", "question": "Your flight was scrapped and I am furious, I want my money back", "accepted": ["customer_relations"]},
+  {"id": "para-not-happening", "question": "My flight to Helsinki is not happening anymore", "accepted": ["rebooking"]},
+  {"id": "para-travel-case", "question": "Is my travel case on the next plane?", "accepted": ["baggage"]},
+  {"id": "para-move-trip", "question": "How much to move my trip to next week?", "accepted": ["fares"]}
+]

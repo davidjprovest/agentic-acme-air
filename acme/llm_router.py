@@ -8,6 +8,7 @@ as "invalid" rather than guessed.
 """
 
 import json
+import re
 import urllib.request
 
 from acme.routing import ESCALATION_TABLE, FALLBACK_DESK
@@ -39,8 +40,13 @@ def build_system_prompt() -> str:
 
 
 def parse_desk(content: str) -> str:
+    # Ollama 0.40 has no structured output for qwen3.5, so the model may wrap
+    # its JSON in a code fence or chatter: take the first {...} object.
+    match = re.search(r"\{.*?\}", content, re.DOTALL)
+    if match is None:
+        return "invalid"
     try:
-        desk = str(json.loads(content).get("desk", "")).strip().lower()
+        desk = str(json.loads(match.group()).get("desk", "")).strip().lower()
     except (json.JSONDecodeError, AttributeError):
         return "invalid"
     return desk if desk in VALID_DESKS else "invalid"
@@ -51,7 +57,6 @@ def route_with_llm(question: str, model: str = DEFAULT_MODEL, timeout: float = 1
         "model": model,
         "stream": False,
         "think": False,
-        "format": "json",
         "options": {"temperature": 0},
         "messages": [
             {"role": "system", "content": build_system_prompt()},
