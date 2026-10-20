@@ -277,7 +277,7 @@ def check_fare_rule(fare_class: str) -> dict:
 **Try it.** Open the MCP Inspector, a web page for poking at a server by hand:
 
 ```bash
-uv run mcp dev servers/fares_server.py
+npx @modelcontextprotocol/inspector uv run python -m servers.fares_server
 ```
 
 In the Inspector, connect, open Tools, call `check_fare_rule` with `B`, then with `Z`, and compare the two results.
@@ -290,18 +290,20 @@ In the Inspector, connect, open Tools, call `check_fare_rule` with `B`, then wit
 
 **What is happening.** uv installs this project by writing a small pointer file, `.venv/lib/python3.12/site-packages/_editable_impl_acme_lab.pth`, which tells Python where the `acme` code lives. On macOS that file can end up with the system's *hidden* flag set, and recent Python versions skip hidden `.pth` files as a safety measure. Python then never reads the pointer.
 
-The tests still pass because pytest adds the repo folder to Python's search path itself (`pythonpath = ["."]` in `pyproject.toml`). Commands like `mcp dev` don't, so they fail.
+The tests still pass because pytest adds the repo folder to Python's search path itself (`pythonpath = ["."]` in `pyproject.toml`). Commands that load a server *by file path*, like `uv run mcp dev servers/fares_server.py`, don't, so they fail.
 
-**Fix.** Clear the hidden flag:
+Clearing the flag with `chflags nohidden` works briefly, but on this Mac something re-applies it within minutes, so don't rely on it.
 
-```bash
-chflags nohidden .venv/lib/python3.12/site-packages/*.pth
-```
-
-Or, for a single run, tell Python where to look:
+**Fix.** Start servers *as modules* from the repo root. With `python -m`, Python searches the current folder, so `acme` is always found, whatever the pointer file is doing:
 
 ```bash
-PYTHONPATH=. uv run mcp dev servers/fares_server.py
+uv run python -m servers.fares_server
 ```
 
-The flag can come back whenever uv rebuilds the environment, so reach for this fix first if the error reappears after `uv sync`.
+For the MCP Inspector, wrap that same command:
+
+```bash
+npx @modelcontextprotocol/inspector uv run python -m servers.fares_server
+```
+
+Use the same `python -m servers.<name>` form when configuring Goose or kagent to start a server.
