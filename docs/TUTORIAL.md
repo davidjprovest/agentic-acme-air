@@ -476,6 +476,35 @@ uv run python -c "from acme.protocol import check_protocol; print(check_protocol
 
 ---
 
+## Chapter 11: One review function
+
+### One scorer, wrapped once
+
+**The idea.** Scoring an answer takes three existing steps: [extract_facts](../acme/rubric.py:18) pulls out the five facts, [score_service_review](../acme/tools/review.py:18) turns them into a score, and [check_protocol](../acme/protocol.py:13) checks the AI disclosure and the disclaimer. [review_answer](../acme/scoring.py:20) calls all three and returns everything in one dict: `facts`, `score`, `protocol`, `hard_failures` and `soft_failures`. It adds no scoring rules of its own.
+
+**Why it matters.** Later chapters review answers in two places: live, before a passenger sees them, and afterwards, in a batch report. If each place had its own copy of the scoring, the copies would drift apart and the same answer would pass in one place and fail in the other. A single function means there is only one thing to trust and one thing to fix.
+
+### Hard failures and soft failures
+
+**The idea.** Not every failure is equally serious. The three [HARD_FAILURES](../acme/scoring.py:13) are a compensation promise made before eligibility is confirmed, a missing disclaimer and a missing AI disclosure. These are safety and legal problems. Everything else the rubric can fail, such as the option labels or the next step, is a soft failure: it is recorded but never blocks.
+
+**Why it matters.** The rubric matches literal words. An answer can offer two perfectly good choices without writing "option 1" and "option 2", and the rubric would mark it down. That is the matching trap. If the live check blocked on it, a correct answer would be stopped. Blocking only on hard failures keeps the live check safe, while soft failures still show up in the later report. The trap case is tested as a soft failure only ([test_scoring.py:30](../tests/test_scoring.py:30)), and the bad promise trips all three hard failures in order ([test_scoring.py:26](../tests/test_scoring.py:26)).
+
+### Proving there is one path
+
+**The idea.** [test_review_uses_the_one_scoring_path](../tests/test_scoring.py:49) runs for every fixture case and checks that `review_answer` returns exactly what calling `extract_facts`, `score_service_review` and `check_protocol` by hand returns. The `first_turn=False` case ([test_scoring.py:43](../tests/test_scoring.py:43)) shows the disclosure rule relaxing on later turns.
+
+**Why it matters.** This is a parity test. If someone ever adds a second copy of the scoring logic, or changes the wrapper so it disagrees with the originals, this test fails.
+
+**Try it.**
+
+```bash
+uv run pytest tests/test_scoring.py -q
+uv run python -c "from acme.scoring import review_answer; print(review_answer('Hello.', 'ACME01')['hard_failures'])"
+```
+
+---
+
 ## Troubleshooting
 
 ### `ModuleNotFoundError: No module named 'acme'` outside pytest
