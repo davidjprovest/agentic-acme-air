@@ -343,6 +343,42 @@ print(route_with_llm('My suitcase smells of fish and the handle is gone'))"
 
 ---
 
+## Chapter 7: Agent skills
+
+### A skill is a rulebook in a file
+
+**The idea.** A skill is a folder holding one `SKILL.md` file: a short header (`name` and `description`) followed by plain markdown instructions. An agent loads the skill and follows it. [service-recovery-protocol](../skills/service-recovery-protocol/SKILL.md) holds the seven service rules from the spec. Every passenger-facing agent applies it.
+
+**Why it matters.** Without a skill, each agent's system message would repeat the same rules, and the copies would drift apart. One shared file means one place to change a rule.
+
+### Written to match the reviewer
+
+**The idea.** Rule 3 says to label options "Option 1" and "Option 2". Rule 4 says to write "subject to eligibility". Those exact words are what the reviewer in Chapter 3 looks for (see [rubric.py:11](../acme/rubric.py:11)). The disclaimer in rule 7 is copied word for word from `DISCLAIMER` in [data.py](../acme/data.py).
+
+**Why it matters.** The reviewer is a literal keyword matcher, not a judge with taste. An agent that follows the skill therefore passes the rubric by construction, and a skill that paraphrased the rules would not.
+
+### A second skill, for the reviewer
+
+**The idea.** [service-review-rubric](../skills/service-review-rubric/SKILL.md) lists the five facts and their keywords. It tells the service_reviewer agent to pass five true or false values to `score_service_review` and never to work out the score itself.
+
+**Why it matters.** The model reads and extracts. The code does the arithmetic. That split is what keeps the same answer scoring the same every time.
+
+### The documents are tested against the code
+
+**The idea.** [test_skills.py](../tests/test_skills.py) checks that each skill's `name` matches its folder, that the protocol contains the disclaimer verbatim and every desk name from the escalation table, and that the rubric skill contains every keyword from the constants in `acme/rubric.py`. The small frontmatter parser lives in the test file at [test_skills.py:13](../tests/test_skills.py:13).
+
+**Why it matters.** A document that describes code goes stale quietly. Here, if someone changes a keyword in code, a test fails until the skill is updated. Prose and code stay in sync because a machine checks them.
+
+**Try it.**
+
+```bash
+uv run pytest tests/test_skills.py -q
+```
+
+Then edit a keyword in `acme/rubric.py` (and put it back afterwards) to watch the sync test fail.
+
+---
+
 ## Troubleshooting
 
 ### `ModuleNotFoundError: No module named 'acme'` outside pytest
