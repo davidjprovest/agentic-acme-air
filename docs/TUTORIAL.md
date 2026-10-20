@@ -447,6 +447,35 @@ uv run python -c "from acme.agents import load_agents; print(sorted(load_agents(
 
 ---
 
+## Chapter 10: Protocol checks
+
+### Two rules the rubric does not cover
+
+**The idea.** The reviewer in Chapter 3 scores five facts. Rules 6 and 7 of the service protocol are not among them: tell the passenger they are talking to an AI assistant, and end with the fixed disclaimer. [check_protocol](../acme/protocol.py:13) checks both and returns `disclosed_ai`, `has_disclaimer` and `passed`. The disclosure phrases are listed in [AI_DISCLOSURES](../acme/protocol.py:10).
+
+**Why it matters.** Telling people they are talking to an AI is a legal requirement in the EU (AI Act, Article 50), so it gets its own named check instead of being hidden as a sixth rubric fact. Keeping it separate also leaves the rubric at exactly five facts, as the spec says.
+
+### Literal matching, with one exception for later turns
+
+**The idea.** The disclosure check is case-insensitive: "AI ASSISTANT" counts. The disclaimer check is case-sensitive and must match `DISCLAIMER` from [data.py](../acme/data.py:5) word for word, so a shouting or re-capitalised copy fails ([test_protocol.py:39](../tests/test_protocol.py:39)). The disclosure is only needed on the first turn. With `first_turn=False`, `disclosed_ai` is always True ([test_protocol.py:29](../tests/test_protocol.py:29)).
+
+**Why it matters.** Like the rubric, this is plain string matching with no model judging, so the same answer always gets the same result. Being strict about the disclaimer means the legal text cannot be quietly reworded.
+
+### Keeping the good examples honest
+
+**The idea.** [test_every_good_case_passes_protocol](../tests/test_protocol.py:47) runs `check_protocol` over every case in `reviewer_cases.json` marked as a good answer. The fixture is read, never edited.
+
+**Why it matters.** If someone adds a "good" example that forgets the disclosure or disclaimer, this test fails. The examples that teach what a good answer looks like must themselves follow every rule.
+
+**Try it.**
+
+```bash
+uv run pytest tests/test_protocol.py -q
+uv run python -c "from acme.protocol import check_protocol; print(check_protocol('Hello.'))"
+```
+
+---
+
 ## Troubleshooting
 
 ### `ModuleNotFoundError: No module named 'acme'` outside pytest
