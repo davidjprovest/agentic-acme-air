@@ -44,12 +44,16 @@ Not done: nothing.
 ## Questions for David
 
 1. **Should service_reviewer run inside the agent graph, or only from the evaluation harness?**
-   *Recommendation: evaluation harness only.* It scores answers and never resolves cases, so putting it in the graph invites the duty manager to route passengers to it and adds a model call to every answer. Run it after the fact over transcripts; it stays a pure judge and you keep its scores comparable across runs.
+   **Decided 2026-10-20: both, with one scorer and two callers.** (My first recommendation, harness only, was wrong: spec section 0.3 asks for an in-graph reviewer and a DeepEval suite.)
+   - One scoring path: `extract_facts` + `score_service_review` + `check_protocol`. Neither caller keeps its own copy, so a live score and a test score mean the same thing.
+   - **In-graph:** a deterministic code gate on every answer before the passenger sees it, not the service_reviewer LLM agent (an instruction to "call the reviewer last" relies on the model obeying, the same weakness as the planted flaw). It blocks only on hard rules: unconfirmed compensation promise, missing disclaimer, missing first-turn AI disclosure. Hard fail: retry once, then hand off to a human. Soft facts (option wording, next step) are logged, never blocking, so the matching trap cannot stop correct answers.
+   - **Post-run:** the eval harness and later DeepEval run the same scorer over fixtures and saved traces, plus judge metrics. The service_reviewer agent belongs here.
+   - Built in chunk 03 (`plans/03-review-layer/`).
 2. **Is TOML-to-kagent rendering the next chunk, or the web app?**
-   *Recommendation: kagent rendering first.* The agents only become testable against a real model once they run somewhere, and Part 1's planted-flaw exercise needs that. The web app is a front end on top of a working graph. Install kagent, check its real CRD schema, then write the renderer against it, with a golden-file test per agent.
+   *Recommendation: kagent over LangFlow as the runtime* (agents as separate addressable services, A2A hand-offs in traces, gateway authorisation per agent; our TOMLs map nearly 1:1 to declarative agents; LangFlow suits visual prototyping, not test-first). Chunk 03 builds the review layer first because it stays offline; kagent rendering follows once kagent is installed and its CRD schema can be checked.
 3. **Should the frontmatter parser move to `acme/skills.py`?** (builder flagged) It lives in `tests/test_skills.py:13` because only tests use it. *Recommendation: move it when the kagent renderer needs to read skills, not before.*
 4. **Should the escalation table have one source?** The keyword table now appears in `acme/routing.py`, the protocol skill, and (as keywords) in each agent description. Tests keep them in sync, which is the right call for now. *Recommendation: leave it; if it changes often, generate the skill table from code.*
-5. **The `.docx` debris** (`[Content_Types].xml`, `_rels/`, `docProps/`, `word/`) in the repo root: gitignored, but clutters the folder. *Recommendation: delete it locally.*
+5. **The `.docx` debris** (`[Content_Types].xml`, `_rels/`, `docProps/`, `word/`) in the repo root: gitignored, but clutters the folder. *Done: David deleted it.*
 
 ## Summary
 
