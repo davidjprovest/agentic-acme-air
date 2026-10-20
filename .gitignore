@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Unzipped .docx debris (keep the source .docx outside the repo or in docs/)
+\[Content_Types\].xml
+_rels/
+docProps/
+word/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
