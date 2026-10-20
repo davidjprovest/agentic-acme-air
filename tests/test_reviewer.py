@@ -30,7 +30,7 @@ def test_fixture_set_is_big_enough_both_ways():
 
 @pytest.mark.parametrize("case", CASES, ids=[c["id"] for c in CASES])
 def test_case_scores_as_expected(case):
-    result = score_service_review(**extract_facts(case["answer"], case["pnr"]))
+    result = review(case["id"])
     assert result["passed"] == case["expected_pass"], result["message"]
 
 

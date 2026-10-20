@@ -34,7 +34,7 @@ def score_service_review(
     if promised_compensation_without_confirmation:
         score = 0.0
     else:
-        score = round(sum(WEIGHTS[fact] for fact in WEIGHTS if earned[fact]), 2)
+        score = round(sum(weight for fact, weight in WEIGHTS.items() if earned[fact]), 2)
 
     passed = score >= PASS_THRESHOLD
     return {
