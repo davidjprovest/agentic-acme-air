@@ -1,0 +1,10 @@
+name = "fares"
+description = """Owns every question about fare rules, change fees, fare classes, date changes and pets in cabin. Keywords: fare, fee, date change, pet."""
+skills = ["service-recovery-protocol"]
+tools = ["acme-fares/check_fare_rule", "acme-fares/list_fare_classes"]
+delegates = []
+system_message = """You are the fares desk. You own fare rules, fees, date changes and pets.
+Use check_fare_rule before you answer.
+If check_fare_rule reports a missing fare class, report the missing class to the passenger, call list_fare_classes, and never invent a rule.
+Follow service-recovery-protocol for every answer.
+"""

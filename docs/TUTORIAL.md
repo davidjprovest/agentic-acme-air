@@ -379,6 +379,45 @@ Then edit a keyword in `acme/rubric.py` (and put it back afterwards) to watch th
 
 ---
 
+## Chapter 8: Agent definitions
+
+### An agent is a small config file
+
+**The idea.** Each of the seven agents is one TOML file in `agents/`, using a format we invented for this lab (it is not kagent YAML; a later chunk converts these once kagent is installed). A file holds six fields: `name`, `description`, `skills`, `tools`, `delegates` and `system_message`. For example, [fares.toml](../agents/fares.toml) names one skill, two tools and no delegates.
+
+**Why it matters.** An agent is not magic. It is a name, a job description, some rulebooks, some tools and a prompt. Keeping that in a plain file means you can read it, diff it and test it without running a model.
+
+### The description is a routing trigger
+
+**The idea.** The `description` field is what an orchestrator reads to decide who gets a question. So it lists the topics and keywords the agent owns, taken from the escalation table at [routing.py:11](../acme/routing.py:11), instead of describing a friendly personality. See the fares description at [fares.toml:2](../agents/fares.toml:2).
+
+**Why it matters.** An orchestrator choosing between agents sees only their descriptions. A vague description such as "a helpful travel expert" gives it nothing to match on, so questions get misrouted.
+
+### One tool, one owner
+
+**The idea.** There are 8 tools across the 5 servers, and each is assigned to exactly one agent. `tools` entries read `<server name>/<tool name>`, for example `acme-fares/check_fare_rule`. The duty manager holds the booking and flight-status tools, [customer_relations.toml](../agents/customer_relations.toml) holds none at all, and [service_reviewer.toml](../agents/service_reviewer.toml) holds only the scoring tool.
+
+**Why it matters.** Clear ownership keeps each agent's job small and makes it obvious which agent to blame when an answer is wrong. An agent with every tool tends to use the wrong one.
+
+### A planted flaw in the orchestrator
+
+**The idea.** [duty_manager.toml](../agents/duty_manager.toml) contains a deliberate mistake, marked by a comment at [duty_manager.toml:6](../agents/duty_manager.toml:6). The last line of its system message, at [duty_manager.toml:12](../agents/duty_manager.toml:12), tells it to answer directly whenever it can instead of delegating. An orchestrator that does so skips the specialist desks.
+
+**Why it matters.** This is the lab's exercise: find the sentence, remove it, and measure whether routing improves. Do not remove it yet. Fixing it is only meaningful if you can show the before and after.
+
+### Open question: where does the reviewer run?
+
+service_reviewer is not a delegate of the duty manager, because it scores answers and never resolves a case. Whether it runs inside the agent graph or from the evaluation harness outside it is not decided yet. That is settled in Part 2, so for now it is an open question.
+
+**Try it.**
+
+```bash
+cat agents/fares.toml
+uv run python -c "import tomllib; print(tomllib.load(open('agents/duty_manager.toml','rb'))['delegates'])"
+```
+
+---
+
 ## Troubleshooting
 
 ### `ModuleNotFoundError: No module named 'acme'` outside pytest
