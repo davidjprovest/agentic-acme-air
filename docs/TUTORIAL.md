@@ -505,6 +505,35 @@ uv run python -c "from acme.scoring import review_answer; print(review_answer('H
 
 ---
 
+## Chapter 12: The in-graph gate
+
+### A check that always runs
+
+**The idea.** Between a drafted answer and the passenger sits a small piece of code, [gate_answer](../acme/gate.py:24). It calls [review_answer](../acme/scoring.py:20) from Chapter 11 and makes one of three decisions. `deliver`: there are no hard failures, so the answer goes out unchanged. `retry`: there is a hard failure and this is an early attempt, so the answer is held back and the agents try again. `handoff`: there is still a hard failure on the last attempt, so the passenger gets a fixed safe message instead.
+
+**Why it matters.** The gate is code, not the service_reviewer agent, on purpose. An instruction such as "call the reviewer last" only works if the model chooses to obey it, and that is exactly the weakness planted in `agents/duty_manager.toml`. Code does not forget or get talked out of it. The gate also blocks only on hard failures, so the matching trap from Chapter 11 can never stop a correct answer ([test_gate.py:25](../tests/test_gate.py:25)).
+
+### Retry once, then a human
+
+**The idea.** [MAX_ATTEMPTS](../acme/gate.py:14) is 2. A bad promise on attempt 1 gives `retry` with no text to deliver ([test_gate.py:31](../tests/test_gate.py:31)). The same answer on attempt 2 gives `handoff` ([test_gate.py:37](../tests/test_gate.py:37)). An attempt number below 1 is a mistake in the caller, so it raises `ValueError` ([test_gate.py:48](../tests/test_gate.py:48)).
+
+**Why it matters.** Models sometimes produce a good answer on a second try, so one retry is cheap. But looping forever is worse than failing, so after the limit the case goes to a person.
+
+### The safe fallback has to be safe itself
+
+**The idea.** [HANDOFF_MESSAGE](../acme/gate.py:16) says the passenger is talking to an AI assistant, says a member of the Acme Air team will take over, names the next step, promises nothing, and ends with `DISCLAIMER` joined on from [data.py](../acme/data.py:5) rather than retyped. [A test](../tests/test_gate.py:43) runs it through the same review and requires no hard failures.
+
+**Why it matters.** A safety net that breaks the rules it enforces would be useless. Because the fallback is checked by the same scorer, changing its wording in a way that breaks a rule fails a test.
+
+**Try it.**
+
+```bash
+uv run pytest tests/test_gate.py -q
+uv run python -c "from acme.gate import gate_answer; print(gate_answer('You are entitled to EUR 600.', 'ACME01', attempt=2)['decision'])"
+```
+
+---
+
 ## Troubleshooting
 
 ### `ModuleNotFoundError: No module named 'acme'` outside pytest
