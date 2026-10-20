@@ -302,7 +302,7 @@ In the Inspector, connect, open Tools, call `check_fare_rule` with `B`, then wit
 
 **The idea.** Ollama 0.40 can't force JSON output for qwen3.5. It replied `"structured output is unavailable"`, which showed up as an HTTP 501 error. So the router asks for JSON in the prompt, and the parser picks the first `{...}` object out of whatever comes back, even if the model wraps it in a code fence or adds chatter.
 
-**Why it matters.** Small models are inconsistent about output format. Parsing tolerantly while *validating* strictly gets the best of both. [test_llm_router.py:34](../tests/test_llm_router.py:34) tests the fenced case.
+**Why it matters.** Small models are inconsistent about output format. Parsing tolerantly while *validating* strictly gets the best of both. [test_llm_router.py:35](../tests/test_llm_router.py:35) tests the fenced case.
 
 ### Offline tests and live tests
 
