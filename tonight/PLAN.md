@@ -1,5 +1,7 @@
 # Tonight's plan: Acme Air core in 2 hours
 
+> **Note:** the `uv run mcp dev servers/...` check below fails on this Mac. Use `npx @modelcontextprotocol/inspector uv run python -m servers.fares_server` instead (see Troubleshooting in [docs/TUTORIAL.md](../docs/TUTORIAL.md)).
+
 ## What and why
 
 The full spec is a 4.5-hour lab on a Kubernetes stack: kind/Podman, kagent, agentgateway, Keycloak, OpenFGA, Langfuse, DeepEval and Presidio. None of the cluster tooling is installed, and a 9B local model can't stand that up in 2 hours.

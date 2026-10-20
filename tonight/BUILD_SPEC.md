@@ -1,5 +1,9 @@
 # Acme Air core: build spec for qwen3.5:9b
 
+> **Superseded in two places.** This is the chunk 01 build record; the code and [docs/TUTORIAL.md](../docs/TUTORIAL.md) are now the source of truth.
+> - Task 6 (LLM router): do not send `"format": "json"`. Ollama 0.40 rejects it for qwen3.5 (HTTP 501). See `parse_desk` in [acme/llm_router.py](../acme/llm_router.py) and the tutorial's "Robust parsing".
+> - Manual server check: do not use `uv run mcp dev servers/<file>.py`. Use `npx @modelcontextprotocol/inspector uv run python -m servers.fares_server` (tutorial, Troubleshooting).
+
 Scope: the pure-Python core of the Acme Air lab. That means synthetic data, 8 tools (with 2 planted defects), a deterministic reviewer, a keyword routing baseline, 5 MCP servers and a pytest contract. There is no Kubernetes, no gateway and no LLM agents. Later parts of the lab point kagent at these servers.
 
 How to use this file: each task below is one fresh chat. Paste **Global rules**, then the task section, then the current contents of any file the task imports. First ask for the test file, then for the implementation.
