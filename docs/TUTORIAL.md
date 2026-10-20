@@ -534,6 +534,35 @@ uv run python -c "from acme.gate import gate_answer; print(gate_answer('You are 
 
 ---
 
+## Chapter 13: Post-run evals
+
+### Checking the checker
+
+**The idea.** The fixture file holds eleven labelled answers, each marked as one that should pass or should not. [run_eval](../acme/evals.py:18) scores every one with `review_answer` from Chapter 11 and asks `gate_answer` from Chapter 12 what the live gate would do on a first attempt. It returns one record per case, in the same order as the fixture, plus a summary of five counts: `n` (cases scored), `agreed` (the score's pass or fail matches the label), `passed`, `hard_failed` (cases with at least one hard failure) and `delivered` (cases the live gate would let through).
+
+**Why it matters.** A reviewer you never test is just another thing you hope works. Running it over answers whose correct verdict you already know tells you how far to trust it. The evals add no scoring rules of their own, so they measure the same code the passengers' answers go through ([test_evals.py:39](../tests/test_evals.py:39) checks the scores match).
+
+### Two verdicts that differ on purpose
+
+**The idea.** The vocabulary-trap answer is good but does not use the exact words "option 1". The post-run score marks it down, yet the live gate delivers it ([test_evals.py:29](../tests/test_evals.py:29)). The bad promise is marked down and the gate asks for a retry ([test_evals.py:35](../tests/test_evals.py:35)).
+
+**Why it matters.** The post-run report is strict so you can see wording problems and improve the agents. The live gate is lenient so a correct answer is never blocked. Seeing both verdicts side by side in one table shows that trade-off clearly.
+
+### A report you can open anywhere
+
+**The idea.** [render_html](../acme/evals.py:65) writes a single self-contained page: the summary first, then one row per case. Each rate is written with its sample size, such as `11/11 (n=11)`, so nobody mistakes eleven cases for proof of anything broad. It uses no scripts, no links and no external styles, and all case text is escaped ([test_evals.py:54](../tests/test_evals.py:54)), so a strange case id cannot inject markup.
+
+**Why it matters.** A report that pulls in outside resources can break or leak when opened offline or shared. Showing the sample size next to every score keeps the numbers honest.
+
+**Try it.**
+
+```bash
+uv run pytest tests/test_evals.py -q
+uv run python -m acme.evals --html eval.html   # then open eval.html in a browser
+```
+
+---
+
 ## Troubleshooting
 
 ### `ModuleNotFoundError: No module named 'acme'` outside pytest
